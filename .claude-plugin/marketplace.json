@@ -1,0 +1,14 @@
+{
+  "name": "data-product-agents",
+  "owner": {
+    "name": "Merlijn Broekers"
+  },
+  "plugins": [
+    {
+      "name": "data-product-agents",
+      "source": "./",
+      "description": "DDD-aligned data contract evaluation agents (Agent 0 Setup, Agent 1 Alignment, Agent 2 Consumer Advocate, Agent 3 Improvement Planner)",
+      "version": "1.0.0"
+    }
+  ]
+}

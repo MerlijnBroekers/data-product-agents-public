@@ -1,0 +1,5 @@
+# Local path overrides — never commit personal settings
+.claude/settings.local.json
+
+# Claude Code plugin install directory
+plugins/
