@@ -1,5 +1,5 @@
 {
   "name": "data-product-agents",
-  "description": "DDD-aligned data contract evaluation agents (Agent 0 Setup, Agent 1 Alignment, Agent 2 Consumer Advocate, Agent 3 Improvement Planner)",
-  "version": "1.0.0"
+  "description": "DDD-aligned data contract evaluation agents. Evaluates data contracts against 4 Data Product Principles and produces a phased improvement plan. Includes Agent 0 (setup guide), Agent 1 principle checks (P1 domain language, P2 ownership, P3 knowledge, P4 business events), Agent 2 (consumer advocate), and Agent 3 (improvement planner).",
+  "version": "2.1.0"
 }

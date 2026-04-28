@@ -1,266 +1,284 @@
 # Data Product Agents
 
-A Claude Code plugin with three AI agents that evaluate data contracts against DDD-based Data Product Principles and produce an actionable improvement plan.
+AI agents that evaluate data contracts against DDD-based Data Product Principles and produce an actionable, phased improvement plan.
+
+Works with **Claude Code**, **Google AI Studio**, and the **Gemini API** — see the setup guides below.
 
 ---
 
-## The three agents
+## How it works
 
 ```
-Agent 1 — Alignment Evaluator    /agent-1-alignment
-Agent 2 — Consumer Advocate      /agent-2-consumer-requests
-Agent 3 — Improvement Planner    /agent-3-improvement-plan
+Stage 1 — Principle checks (run any or all)          Stage 2 — Consumer analysis
+─────────────────────────────────────────────        ──────────────────────────────
+/agent-1-p1-domain-language                          /agent-2-consumer-requests
+/agent-1-p2-ownership                                    │
+/agent-1-p3-knowledge                                    │
+/agent-1-p4-business-events                              │
+        │                                                │
+        ▼                                                │
+Producer team reviews findings                           │
+Fills in: Accept / Reject / Propose Alternative          │
+        │                                                │
+        └──────────────────┬──────────────────────────────┘
+                           ▼
+                    Stage 3 — Improvement plan
+                    /agent-3-improvement-plan
+                           │
+                           ▼
+              Phased, risk-ordered improvement plan
 ```
 
-Run them in order. Each agent feeds into the next.
+Stage 1 and Stage 2 run independently and in parallel. Stage 3 requires the annotated output of Stage 1 and the output of Stage 2.
 
-```
-Bounded Context Canvases  ──┐
-Data Contracts            ──┴──► Agent 1 ──► alignment_report.md ──┐
-                                                                     │
-                                                                     ├──► Agent 3 ──► improvement_plan.md
-Analytics Queries ──► Agent 2 ──► contract_recommendations.md ──────┘
-Data Contracts    ──┘
-```
-
-### Agent 1 — Alignment Evaluator
-
-Reads your Bounded Context Canvases (BCCs) and data contracts, then evaluates every table against the 4 Data Product Principles. Outputs a structured report with HIGH / MEDIUM / LOW findings per principle, per table.
-
-**Inputs:** BCCs (`domain_contexts_dir`), contracts (`datacontracts_dir`)
-**Output:** `$ALIGNMENT_REPORT`
-
-### Agent 2 — Consumer Advocate
-
-Reads your analytics query library and data contracts. Identifies fields consumers repeatedly compute inline (suggesting materialisation), flags SLA gaps, maps unused contract surface, and detects join key naming mismatches.
-
-**Inputs:** Query library (`analytics_queries`), contracts (`datacontracts_dir`)
-**Output:** `$CONTRACT_RECOMMENDATIONS`
-
-### Agent 3 — Improvement Planner
-
-Mediates between Agent 1 findings and Agent 2 demands. Classifies every change by consumer risk, sequences it into phases (Phase 0 quick wins → Phase 1 additive → Phase 2 managed migrations → Phase 3 deferred), and produces ODCS-compatible SLA recommendations.
-
-**Inputs:** `alignment_report`, `contract_recommendations`, `analytics_queries`, `datacontracts_dir`, `domain_contexts_dir`
-**Output:** `$IMPROVEMENT_PLAN`
+Each agent asks you to paste your input directly into the conversation — no file paths or configuration required. If input is incomplete, the agent notes the gaps and continues with what is available.
 
 ---
 
-## Prerequisites
+## The agents
 
-Before running the agents, your project needs:
+### /agent-0-setup
 
-| File / folder | What it is | How to produce it |
-|---|---|---|
-| `domain_contexts_dir/*.yaml` | Bounded Context Canvas files — the gold standard for evaluation | Author manually; see the BCC format below |
-| `datacontracts_dir/*.yaml` | ODCS v3.1.0 data contracts, one per table | Generate from your schema using `datacontract-cli` or equivalent |
-| `analytics_queries` | JSON array of queries with `name`, `sql`, and optional `sla` fields | Author manually; see the query format below |
+An onboarding guide. Explains the pipeline, the four principles, and what inputs to prepare. Start here.
 
-Agent 3 additionally requires the outputs of Agents 1 and 2 to be present and complete.
+### /agent-1-p1-domain-language
 
----
+Evaluates your data contract(s) against **Principle 1 — Use your domain language, consistently**. Checks entity and field naming against your BCC's `contextual_language`, detects synonyms and cross-table inconsistencies, and flags domain language terms that represent conclusions but have no corresponding field.
 
-## Installation
+### /agent-1-p2-ownership
 
-### 1. Clone this repository
+Evaluates against **Principle 2 — Do not share what you do not own**. Checks for fields that are attributes of another bounded context, verifies reference field naming, and flags ambiguous cases (fetched foreign state vs captured snapshot). Uses the BCC `relationships` block to identify upstream context dependencies.
 
-```bash
-git clone https://gitlab.rewirenow.com/merlijnbroekers/data-product-agents.git
-```
+### /agent-1-p3-knowledge
 
-### 2. Open the plugin manager
+Evaluates against **Principle 3 — Share knowledge, not data**. Checks `business_capabilities` for capabilities that imply unexposed derived fields, flags tables that expose only raw technical data.
 
-In Claude Code, run:
+### /agent-1-p4-business-events
 
-```
-/plugins
-```
+Evaluates against **Principle 4 — Capture business meaning, not just state changes**. Detects generic CRUD audit log patterns. Uses the BCC's `domain_events` field as the primary source for backlog notes; uses `business_capabilities` as supplementary inspiration when `domain_events` is absent.
 
-Navigate to the **Marketplaces** tab and click **Add Marketplace**.
+### /agent-2-consumer-requests
 
-### 3. Enter the local path
+Analyses SQL query patterns against data contracts. Identifies fields consumers repeatedly compute inline (materialisation candidates), maps high-dependency fields, surfaces unused contract surface, and detects join key naming mismatches.
 
-When prompted for a marketplace source, enter the absolute path to where you cloned the repo:
+**Input:** JSON array of SQL statements. Nothing else.
 
-- macOS/Linux: `/home/yourname/data-product-agents`
-- Windows (WSL): `/mnt/c/Users/yourname/Desktop/data-product-agents`
-- Windows (native): `C:\Users\yourname\Desktop\data-product-agents`
+### /agent-3-improvement-plan
 
-### 4. Install the plugin
+Reconciles annotated Stage 1 findings and Stage 2 consumer recommendations into a phased, risk-ordered improvement plan. Only plans for findings the team accepted or proposed an alternative for. Produces ODCS-compatible data quality recommendations.
 
-Claude Code will show a plugin details screen for **data-product-agents**. Choose your install scope:
-
-- **Install for you (user scope)** — available in all your projects
-- **Install for all collaborators on this repository (project scope)** — shared via the repo
-
-### 5. Reload plugins
-
-```
-/reload-plugins
-```
-
-Confirm the skills loaded — they should appear when you type `/` in the prompt. If the skills don't show up, close and re-open your terminal and try again.
-
-### 6. Run the setup wizard
-
-```
-/agent-0-setup
-```
-
-This interactive wizard checks which input files exist in your project, asks for their paths, and writes `.claude/settings.local.json` so the agents know where to find your data.
+**Input:** Annotated principle findings (from Stage 1) + Agent 2 output (from Stage 2).
 
 ---
 
-## Configuration
+## The four Data Product Principles
 
-Agent 0 writes a `data-product-config.json` file to your project root during setup. This is the single source of truth for all file paths. Edit it directly at any time to change where the agents look for inputs or write outputs.
+1. **Use your domain language, consistently** — field and table names must match the contextual language your team discovered during collaborative design.
+2. **Do not share what you do not own** — expose only data the bounded context creates or captures as part of its own business processes.
+3. **Share knowledge, not data** — expose derived, business-meaningful facts rather than raw data that forces consumers to reconstruct business logic.
+4. **Capture business meaning, not just state changes** — model past-tense domain events, not generic CRUD audit logs.
 
-```json
-{
-  "domain_contexts_dir":      "docs/domain_contexts",
-  "datacontracts_dir":        "docs/datacontracts",
-  "analytics_queries":        "docs/analytics_queries.json",
-  "alignment_report":         "docs/alignment_report.md",
-  "contract_recommendations": "docs/contract_recommendations.md",
-  "improvement_plan":         "docs/improvement_plan.md"
-}
+---
+
+## How the Team Review works
+
+Each Stage 1 finding includes a Team Review block. The **producer team** fills it in before running Stage 3:
+
+```
+**Team Review** — fill in before running `/agent-3-improvement-plan`:
+- **Decision:** [ ] Accept suggested fix   [ ] Reject — no change needed   [ ] Propose Alternative
+- **Notes / Proposed Approach:** _(explain reasoning or describe your own implementation plan)_
 ```
 
-If `data-product-config.json` is absent, all agents fall back to the defaults shown above.
+- **Accept** — implement the suggested fix as described
+- **Reject** — no change needed; include a brief reason
+- **Propose Alternative** — describe your own approach in the Notes field
+
+Agent 3 uses the team's decisions and proposed approaches directly. **The producer team owns the fixes.**
 
 ---
 
 ## Input formats
 
-### Bounded Context Canvas (`$DOMAIN_CONTEXTS_DIR/*.yaml`)
+### Bounded Context Canvas
 
-One file per bounded context. Agent 1 will halt if any of the five required keys are missing or empty.
+One YAML document per domain context. None of the keys are strictly required — agents will note gaps and continue.
 
 ```yaml
 name: Orders Context
 description: Manages the full lifecycle of a customer order from placement to delivery.
-tables_included:
-  - orders
-  - order_items
-ubiquitous_language:
+contextual_language:
   - term: Order
     definition: A confirmed purchase intent placed by a customer
-  - term: Order Item
-    definition: A single product line within an order, including quantity and price at time of purchase
   - term: Delivery Days
-    definition: The number of calendar days between order placement and delivery to the customer
+    definition: The number of calendar days between order placement and delivery
   - term: On-Time Delivery
     definition: An order delivered on or before the estimated delivery date
-derived_knowledge:
-  - Whether an order was delivered on time (delivered_at <= estimated_delivery_date)
-  - Total number of calendar days from placement to delivery
+business_capabilities:
+  - Process customer orders from placement through to delivery confirmation
+  - Determine whether an order was delivered on time
+  - Calculate total calendar days from placement to delivery
 domain_events:
   - OrderPlaced
   - OrderShipped
   - OrderDelivered
   - OrderCancelled
+relationships:
+  upstream:
+    - context: Customer Context
+      description: We receive the customer reference at time of order placement
+  downstream:
+    - context: Analytics Context
+      description: We provide order and delivery data for reporting
+services_in_context:
+  - Order Management API
+  - Delivery tracking event stream
 ```
 
----
+### Data contract
 
-### Data contract (`$DATACONTRACTS_DIR/*.yaml`)
-
-One file per table, following [ODCS v3.1.0](https://github.com/bitol-io/open-data-contract-standard). A full spec reference is bundled at `reference/odcs_reference.md`. Each contract must have a `schema` block with at least one object containing `name` and `properties`.
+One file per table in whatever format your team uses. Should list tables and their fields with names and types.
 
 ```yaml
-apiVersion: v3.1.0
-kind: DataContract
-id: a3f1c2d4-8e56-4b2a-9f10-123456789abc
 name: orders
-version: 1.0.0
-status: active
-domain: orders
-
-servers:
-  - server: production-db
-    type: postgresql
-    host: db.example.com
-    port: 5432
-    database: shop
-    schema: public
-    environment: prod
-
 schema:
   - name: orders
-    physicalType: table
-    logicalType: object
     properties:
       - name: order_id
-        logicalType: string
-        physicalType: TEXT
-        primaryKey: true
-        primaryKeyPosition: 1
+        type: TEXT
         required: true
       - name: customer_id
-        logicalType: string
-        physicalType: TEXT
+        type: TEXT
         required: true
         description: Reference to the owning customer. Owned by the Customer context.
-        relationships:
-          - to: customers.customer_id
-            type: foreignKey
-      - name: status
-        logicalType: string
-        physicalType: TEXT
-        required: true
       - name: placed_at
-        logicalType: timestamp
-        physicalType: TIMESTAMP
+        type: TIMESTAMP
         required: true
       - name: delivered_at
-        logicalType: timestamp
-        physicalType: TIMESTAMP
+        type: TIMESTAMP
       - name: estimated_delivery_date
-        logicalType: timestamp
-        physicalType: TIMESTAMP
+        type: TIMESTAMP
 ```
 
----
+### SQL query library
 
-### Analytics queries (`analytics_queries`)
-
-A JSON array of consumer queries. Each entry must have `name` and `sql`. The optional `sla` object signals that the query owner considers the underlying fields contractable.
+A JSON array of SQL strings. Nothing else.
 
 ```json
 [
-  {
-    "section": "1. Order Funnel",
-    "name": "1.1 Daily order volume",
-    "purpose": "Track daily order volume for trend analysis and anomaly detection",
-    "sql": "SELECT DATE_TRUNC('day', placed_at) AS day, COUNT(order_id) AS orders FROM orders WHERE placed_at IS NOT NULL GROUP BY 1 ORDER BY 1",
-    "sla": {
-      "metric": "daily_order_volume_freshness",
-      "suggested_target": "Data for the previous day available by 06:00 UTC",
-      "sla_type": "freshness"
-    }
-  },
-  {
-    "section": "1. Order Funnel",
-    "name": "1.2 Order status distribution",
-    "purpose": "Show how orders progress through statuses to identify processing bottlenecks",
-    "sql": "SELECT status, COUNT(order_id) AS orders FROM orders GROUP BY status ORDER BY orders DESC"
-  },
-  {
-    "section": "2. Delivery Performance",
-    "name": "2.1 Average delivery time",
-    "purpose": "Measure average days from order placement to delivery",
-    "sql": "SELECT AVG(EXTRACT(EPOCH FROM (delivered_at - placed_at)) / 86400.0) AS avg_delivery_days FROM orders WHERE delivered_at IS NOT NULL",
-    "sla": {
-      "metric": "delivery_completeness",
-      "suggested_target": "delivered_at non-null rate above 99% for completed orders",
-      "sla_type": "completeness"
-    }
-  },
-  {
-    "section": "2. Delivery Performance",
-    "name": "2.2 On-time delivery rate",
-    "purpose": "Percentage of orders delivered on or before the estimated date",
-    "sql": "SELECT ROUND(SUM(CASE WHEN delivered_at <= estimated_delivery_date THEN 1 ELSE 0 END)::NUMERIC / NULLIF(COUNT(*), 0) * 100, 2) AS on_time_pct FROM orders WHERE delivered_at IS NOT NULL AND estimated_delivery_date IS NOT NULL"
-  }
+  "SELECT DATE_TRUNC('day', placed_at) AS day, COUNT(order_id) AS orders FROM orders WHERE placed_at IS NOT NULL GROUP BY 1 ORDER BY 1",
+  "SELECT AVG(EXTRACT(EPOCH FROM (delivered_at - placed_at)) / 86400.0) AS avg_delivery_days FROM orders WHERE delivered_at IS NOT NULL",
+  "SELECT ROUND(SUM(CASE WHEN delivered_at <= estimated_delivery_date THEN 1 ELSE 0 END)::NUMERIC / NULLIF(COUNT(*), 0) * 100, 2) AS on_time_pct FROM orders WHERE delivered_at IS NOT NULL"
 ]
 ```
+
+Queries are referenced by position: Query 1, Query 2, Query 3.
+
+---
+
+## Setup: Claude Code
+
+### 1. Clone this repository
+
+```bash
+git clone https://github.com/your-org/data-product-agents.git
+```
+
+### 2. Open the plugin manager
+
+In Claude Code, run `/plugins`. Navigate to the **Marketplaces** tab and click **Add Marketplace**.
+
+### 3. Enter the local path
+
+Enter the absolute path to where you cloned the repo:
+
+- macOS/Linux: `/home/yourname/data-product-agents`
+- Windows (WSL): `/mnt/c/Users/yourname/Desktop/data-product-agents`
+- Windows (native): `C:\Users\yourname\Desktop\data-product-agents`
+
+### 4. Install and reload
+
+Install the plugin, then run `/reload-plugins`. The skills should appear when you type `/` in the prompt.
+
+### 5. Start
+
+```
+/agent-0-setup
+```
+
+---
+
+## Setup: Gemini (Google AI Studio)
+
+The skill files are plain instruction sets and work as system prompts with any capable LLM.
+
+### 1. Clone this repository
+
+```bash
+git clone https://github.com/your-org/data-product-agents.git
+```
+
+### 2. Open Google AI Studio
+
+Go to [aistudio.google.com](https://aistudio.google.com) and create a new prompt.
+
+### 3. Load a skill as the system instruction
+
+Open the SKILL.md file for the agent you want to run (e.g. `skills/agent-1-p1-domain-language/SKILL.md`) and copy its contents. Paste into the **System instructions** field in AI Studio.
+
+For agents that reference ODCS: also open `reference/odcs_reference.md` and paste it into the system instructions or the first user turn, prefixed with `[ODCS REFERENCE]`. This replaces the `$ODCS_REFERENCE` env var that Claude Code resolves automatically.
+
+### 4. Start the conversation
+
+Send a first message: `Let's start.`
+
+The agent will guide you through the analysis step by step, asking you to paste your BCC and contracts as the conversation progresses.
+
+### 5. Collect and annotate findings
+
+Copy the agent's output. Your producer team fills in the Team Review blocks. To run Stage 3, open `skills/agent-3-improvement-plan/SKILL.md` as the system instruction and paste your annotated findings when prompted.
+
+---
+
+## Setup: Gemini API
+
+```python
+import google.generativeai as genai
+
+# Load skill and ODCS reference
+with open("skills/agent-1-p1-domain-language/SKILL.md") as f:
+    skill = f.read()
+with open("reference/odcs_reference.md") as f:
+    odcs = f.read()
+
+system_instruction = skill + "\n\n[ODCS REFERENCE]\n" + odcs
+
+genai.configure(api_key="YOUR_API_KEY")
+model = genai.GenerativeModel(
+    model_name="gemini-1.5-pro",
+    system_instruction=system_instruction
+)
+
+chat = model.start_chat()
+response = chat.send_message("Let's start.")
+print(response.text)
+# → Agent will ask you to paste your BCC
+```
+
+Repeat for each agent you want to run. For Stage 3, load `skills/agent-3-improvement-plan/SKILL.md` and paste annotated findings + Agent 2 output when the agent asks.
+
+---
+
+## Workflow example
+
+```
+1. (parallel) Run /agent-1-p1-domain-language  →  paste BCC + contracts  →  P1 findings
+2. (parallel) Run /agent-1-p2-ownership         →  paste BCC + contracts  →  P2 findings
+3. (parallel) Run /agent-2-consumer-requests    →  paste SQL array + contracts  →  consumer map
+
+4. Producer team fills in Team Review blocks on P1 and P2 findings
+
+5. Run /agent-3-improvement-plan  →  paste annotated findings + Agent 2 output  →  phased plan
+```
+
+You can run any subset of the principle agents. Agent 3 works with whatever findings you provide.
