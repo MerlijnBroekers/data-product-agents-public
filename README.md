@@ -208,9 +208,9 @@ Install the plugin, then run `/reload-plugins`. The skills should appear when yo
 
 ---
 
-## Setup: Gemini (Google AI Studio)
+## Setup: Gemini
 
-The skill files are plain instruction sets and work as system prompts with any capable LLM.
+### Option A — Gemini CLI
 
 ### 1. Clone this repository
 
@@ -218,54 +218,48 @@ The skill files are plain instruction sets and work as system prompts with any c
 git clone https://github.com/your-org/data-product-agents.git
 ```
 
-### 2. Open Google AI Studio
+### 2. Install the plugin
 
-Go to [aistudio.google.com](https://aistudio.google.com) and create a new prompt.
+In the Gemini CLI, load the plugin from the local path the same way you would for any skill directory:
 
-### 3. Load a skill as the system instruction
+```bash
+gemini skills add ./data-product-agents
+```
 
-Open the SKILL.md file for the agent you want to run (e.g. `skills/agent-1-p1-domain-language/SKILL.md`) and copy its contents. Paste into the **System instructions** field in AI Studio.
+### 3. Start
 
-For agents that reference ODCS: also open `reference/odcs_reference.md` and paste it into the system instructions or the first user turn, prefixed with `[ODCS REFERENCE]`. This replaces the `$ODCS_REFERENCE` env var that Claude Code resolves automatically.
+The skills are immediately available. Run any agent by name:
 
-### 4. Start the conversation
-
-Send a first message: `Let's start.`
-
-The agent will guide you through the analysis step by step, asking you to paste your BCC and contracts as the conversation progresses.
-
-### 5. Collect and annotate findings
-
-Copy the agent's output. Your producer team fills in the Team Review blocks. To run Stage 3, open `skills/agent-3-improvement-plan/SKILL.md` as the system instruction and paste your annotated findings when prompted.
+```
+/agent-0-setup
+/agent-1-p1-domain-language
+```
 
 ---
 
-## Setup: Gemini API
+### Option B — gemini agent window
 
-```python
-import google.generativeai as genai
+### 1. Clone this repository
 
-# Load skill and ODCS reference
-with open("skills/agent-1-p1-domain-language/SKILL.md") as f:
-    skill = f.read()
-with open("reference/odcs_reference.md") as f:
-    odcs = f.read()
-
-system_instruction = skill + "\n\n[ODCS REFERENCE]\n" + odcs
-
-genai.configure(api_key="YOUR_API_KEY")
-model = genai.GenerativeModel(
-    model_name="gemini-1.5-pro",
-    system_instruction=system_instruction
-)
-
-chat = model.start_chat()
-response = chat.send_message("Let's start.")
-print(response.text)
-# → Agent will ask you to paste your BCC
+```bash
+git clone https://github.com/your-org/data-product-agents.git
 ```
 
-Repeat for each agent you want to run. For Stage 3, load `skills/agent-3-improvement-plan/SKILL.md` and paste annotated findings + Agent 2 output when the agent asks.
+### 2. Open a skill file
+
+In the gemini agent window, tell the agent to open the skill you want to run:
+
+```
+Open skills/agent-1-p1-domain-language/SKILL.md and follow the instructions in it.
+```
+
+The agent reads the file and starts the skill immediately — it will ask you to paste your BCC and contracts step by step.
+
+To run a different agent, tell it to open the corresponding file:
+
+```
+Open skills/agent-3-improvement-plan/SKILL.md and follow the instructions.
+```
 
 ---
 
