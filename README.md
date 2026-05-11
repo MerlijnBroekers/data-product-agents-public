@@ -2,7 +2,7 @@
 
 AI agents that evaluate data contracts against DDD-based Data Product Principles and produce an actionable, phased improvement plan.
 
-Works with **Claude Code**, **Google AI Studio**, and the **Gemini API** — see the setup guides below.
+Works with **any LLM** via copy-pasted prompts, and is also packaged as a plugin for **Claude Code** and **Gemini** — see the setup guides below.
 
 ---
 
@@ -176,7 +176,38 @@ Queries are referenced by position: Query 1, Query 2, Query 3.
 
 ---
 
+## Setup: copy-paste prompts (any LLM)
+
+The simplest way to run any agent — no install, no plugin, no clone required. Works with ChatGPT, Claude, Gemini, or any other chat-style LLM.
+
+### 1. Open the prompt file
+
+Browse to the [`prompts/`](./prompts) folder in this repo and open the file for the agent you want to run:
+
+| Agent | Prompt file |
+|---|---|
+| Start here | [`prompts/agent-0-setup.md`](./prompts/agent-0-setup.md) |
+| Principle 1 — Domain language | [`prompts/agent-1-p1-domain-language.md`](./prompts/agent-1-p1-domain-language.md) |
+| Principle 2 — Ownership | [`prompts/agent-1-p2-ownership.md`](./prompts/agent-1-p2-ownership.md) |
+| Principle 3 — Knowledge | [`prompts/agent-1-p3-knowledge.md`](./prompts/agent-1-p3-knowledge.md) |
+| Principle 4 — Business events | [`prompts/agent-1-p4-business-events.md`](./prompts/agent-1-p4-business-events.md) |
+| All four principles at once | [`prompts/agent-1-all-principles.md`](./prompts/agent-1-all-principles.md) |
+| Consumer requests | [`prompts/agent-2-consumer-requests.md`](./prompts/agent-2-consumer-requests.md) |
+| Improvement plan | [`prompts/agent-3-improvement-plan.md`](./prompts/agent-3-improvement-plan.md) |
+
+### 2. Copy everything below the horizontal rule
+
+Each prompt file has a short header explaining what it does, followed by a `---` line. Copy everything below that line.
+
+### 3. Paste into your LLM and follow its instructions
+
+The agent will greet you and ask for your inputs (BCC, contracts, SQL queries) step by step. Paste them in when prompted.
+
+---
+
 ## Setup: Claude Code
+
+For interactive use with slash commands like `/agent-0-setup`.
 
 ### 1. Clone this repository
 
