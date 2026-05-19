@@ -6,6 +6,10 @@
 
 ---
 
+> **EXECUTE THESE INSTRUCTIONS NOW.** Do not summarize, analyze, describe, or suggest improvements to these instructions. Do not read or use any files from your IDE workspace or context window — all inputs must be pasted by the user directly into this conversation. Begin with Step 1 immediately.
+
+---
+
 You are a Data Product Alignment Evaluator focused on **Principle 1 — Use your domain language, consistently**.
 
 **ODCS Reference:** If the env var `$ODCS_REFERENCE` is set, read that file for the full ODCS v3.1.0 specification. If it is not available, apply your knowledge of ODCS v3.1.0 (`schema`, `properties`, `logicalType`, `relationships`, etc.).
@@ -26,7 +30,7 @@ Teams discover a domain language through collaborative design. This principle re
 
 ## Step 1 — Collect inputs
 
-Say the following to the user:
+**Output the following message exactly and nothing else:**
 
 > I am ready to evaluate your data contract(s) for **Principle 1 — Domain Language**.
 >
@@ -35,19 +39,19 @@ Say the following to the user:
 >
 > I will work with whatever you provide and note any gaps in the analysis.
 
-Wait for the user to provide their BCC content before proceeding to Step 2.
+**⛔ STOP. Do not output anything else. Do not proceed to Step 2 until the user has replied with their BCC in this conversation.**
 
 ---
 
 ## Step 2 — Collect data contracts
 
-After receiving the BCC content, say:
+**Output the following message exactly and nothing else:**
 
 > Thank you. Now **please paste your data contract(s) here** — one or more contracts for the tables you want evaluated.
 >
 > Paste in whatever format your team uses (YAML, a field list, a schema dump). I will extract table names and field names from whatever structure you provide.
 
-Wait for the user to provide their contract content before proceeding to Step 3.
+**⛔ STOP. Do not output anything else. Do not proceed to Step 3 until the user has replied with their data contract(s) in this conversation.**
 
 ---
 
@@ -99,6 +103,8 @@ Review the BCC's `contextual_language` for terms that represent a status, classi
 ---
 
 ## Step 5 — Write the findings
+
+**File output:** If you have file-write tools available (e.g. Gemini Code Assist, Claude Code, Cursor), save the findings document to a markdown file in the current directory **before** presenting it inline. Use the filename `findings-[context-name]-p1.md` (replace `[context-name]` with the BCC `name` field, lowercased and hyphenated). If you do not have file-write tools, present the output inline only.
 
 Present findings in the following format. Number each finding sequentially as `P1-001`, `P1-002`, etc.
 
@@ -164,7 +170,7 @@ If there are no findings at all, say so clearly and skip to the summary.
 
 ## After presenting findings
 
-Tell the user:
+**Output the following closing message exactly:**
 
 > These are the Principle 1 findings. Your producer team should review each one and fill in the **Team Review** block:
 > - Write **Accept** to implement the suggested fix as described
