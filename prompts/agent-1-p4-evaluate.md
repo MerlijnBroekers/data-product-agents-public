@@ -12,13 +12,10 @@
 
 Extract and hold in memory from the BCC(s):
 - `name` — context name
-- `domain_events` — if present as a dedicated field, this is the primary source for P4 analysis. Use it directly.
-- `business_capabilities` — overview of what this context can do. This is not the same as domain events, but scan it for inspiration: entries that describe business moments or outcomes (e.g. "handle order placement", "process payment receipt", "confirm shipment") may hint at domain events that should exist. Treat these as supplementary signals, not definitive event lists.
-- `services_in_context` — contextual background about external services used. Not relevant to P4 analysis.
+- `business_capabilities` — list of capabilities, each with a `name` (2–4 words, starts with a verb) and `description` (starts with "The ability to..."). Scan the `description` of each capability for business moments and outcomes that hint at domain events.
+- `services_in_context` — applications making up this bounded context, each classified as `internal` or `boundary_api`. Not relevant to P4 analysis.
 
-**Building the events list:** Use `domain_events` as the authoritative source if present. If absent, derive a candidate list from `business_capabilities` entries that sound event-like — and note clearly in the output that this list is inferred, not declared.
-
-If neither field is present or yields candidates, note this and proceed — the CRUD-log check (Check A) can still run.
+**Building the events list:** Derive the events candidate list from `business_capabilities` — for each capability, read its `description` and look for business moments, outcomes, or state changes the domain cares about (e.g. "The ability to confirm when a customer places an order" hints at an `OrderPlaced` event). Note clearly in the output that this list is inferred from capabilities, not a declared event list. If `business_capabilities` is absent or yields no event-like candidates, note this and proceed — Check A can still run.
 
 **Ownership assumption:** Assume all contracts pasted alongside a BCC belong to that BCC's context.
 
@@ -40,7 +37,7 @@ The violation is not the presence of an entity state table — it is when only C
 
 ### Check B — Domain events in the BCC vs events in the contracts (backlog notes)
 
-For each domain event identified from the BCC (via `business_capabilities` or a `domain_events` list), check whether a corresponding table or field exists in the contracts. If no match exists, record it as a **backlog note** — not a finding. The principle allows teams to add domain events incrementally.
+For each candidate domain event inferred from `business_capabilities`, check whether a corresponding table or field exists in the contracts. If no match exists, record it as a **backlog note** — not a finding. The principle allows teams to add domain events incrementally.
 
 List backlog notes separately from active violations. They do not count toward HIGH/MEDIUM/LOW totals.
 

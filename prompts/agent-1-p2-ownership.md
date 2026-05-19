@@ -66,8 +66,8 @@ A source-aligned data product contains your domain's data, and only your domain'
 Extract and hold in memory from the BCC(s):
 - `name` — context name (if absent, use "Unnamed Context")
 - `contextual_language` — list of `{term, definition}` pairs (if absent, note the gap — ownership checks can still run but reference naming checks will be limited)
-- `relationships` — upstream and downstream context dependencies (if present, use this to name likely owners when flagging foreign attributes; if absent, rely on field-level analysis alone)
-- `services_in_context` — describes what external services/APIs this context uses (e.g. boundary APIs, event streams). This is contextual background, not a table ownership list — useful for understanding what external systems this context interacts with, which may inform ownership judgements.
+- `relationships` — list of upstream/downstream context dependencies, each with a `context` (connected context name) and `description` (why the connection exists). Use `context` names to identify likely owners when flagging foreign attributes. If absent, rely on field-level analysis alone.
+- `services_in_context` — applications making up this bounded context, each classified as `internal` (hidden) or `boundary_api` (public-facing). Contextual background — not a table ownership list.
 
 From each data contract, extract:
 - The table name
@@ -75,7 +75,7 @@ From each data contract, extract:
 - Any foreign key declarations (e.g. `relationships` blocks on properties, or `references` annotations)
 - Field `description` values
 
-**Using `relationships`:** If the BCC lists upstream contexts by name, reference them when flagging potential foreign attributes (e.g. "This field appears to belong to the Customer Context listed as an upstream dependency").
+**Using `relationships`:** For each entry in `relationships`, the `context` sub-field names the connected bounded context. Reference these context names when flagging potential foreign attributes (e.g. "This field appears to belong to the Customer Context listed in relationships").
 
 **Ownership assumption:** Assume all contracts pasted alongside a BCC belong to that BCC's context. If multiple BCCs are pasted, try to match contracts to contexts by name or ask the user for clarification.
 
@@ -100,7 +100,7 @@ The team must confirm which case applies.
 
 Severity is HIGH in both cases. Ambiguity at this level always warrants a HIGH flag.
 
-Where the BCC `relationships` block identifies upstream contexts by name, reference the specific context when naming the likely owner (e.g. "This field appears to belong to the Customer Context listed as an upstream dependency").
+Where the BCC `relationships` list includes an entry whose `context` matches the likely owner, reference that context name when flagging (e.g. "This field appears to belong to the Customer Context listed in relationships").
 
 ### Check B — Reference field naming
 

@@ -37,7 +37,7 @@ Entity state tells you that something changed. Domain events tell you what happe
 > I am ready to evaluate your data contract(s) for **Principle 4 — Business Events**.
 >
 > **Please paste your Bounded Context Canvas (BCC) YAML here.**
-> Key field I will use: `business_capabilities` — look for any past-tense business event descriptions within it (e.g. "OrderPlaced event: captured when a customer confirms a purchase"). If your BCC has a separate `domain_events` list, include that too.
+> Key field I will use: `business_capabilities` — each capability has a `name` (e.g. "Handle Order Placement") and `description` (e.g. "The ability to confirm when a customer places an order"). I will scan the descriptions for business moments and outcomes to identify candidate domain events.
 >
 > If you do not have a formal BCC, share the business events your domain has identified in any format. If you have none, I can still check for CRUD-log anti-patterns in your contracts.
 

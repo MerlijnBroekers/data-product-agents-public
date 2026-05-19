@@ -63,8 +63,8 @@ Bounded contexts sometimes leak their internal state — exposing raw fields and
 Extract and hold in memory from the BCC(s):
 - `name` — context name
 - `contextual_language` — list of `{term, definition}` pairs (if absent, note and continue; Check B will be skipped)
-- `business_capabilities` — overview of what this context can do: its key capabilities (e.g. "process customer orders", "calculate delivery time", "determine on-time status"). This is not a direct list of derived fields, but capabilities that imply computation or judgement are strong signals for Check A. Note if absent; Check A will be limited to raw-only table detection.
-- `services_in_context` — contextual background about external services the context uses. Not relevant to P3 analysis.
+- `business_capabilities` — list of capabilities, each with a `name` (2–4 words, starts with a verb) and `description` (starts with "The ability to..."). Capabilities whose description implies computing a result, making a classification, or producing a conclusion are the primary signals for Check A. Note if absent; Check A will be limited to raw-only table detection.
+- `services_in_context` — applications making up this bounded context, each classified as `internal` or `boundary_api`. Not relevant to P3 analysis.
 
 From each data contract, extract all field names per table.
 

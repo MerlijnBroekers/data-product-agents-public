@@ -69,12 +69,12 @@ Each skill is entirely defined in its `SKILL.md` file — there is no separate r
 | Field | Purpose | Used by |
 |---|---|---|
 | `name` | Context name | All agents |
-| `description` | One-line summary | All agents |
+| `purpose` | One-line summary of what this context does and why it exists | All agents |
+| `opex` | Team responsible for owning and managing this context | (background context) |
 | `contextual_language` | Domain vocabulary — list of `{term, definition}` pairs | P1, P2, P3 |
-| `business_capabilities` | What this context can do — its capabilities. Hints at derived fields (P3) and domain events (P4) but is not a direct list of either. | P3, P4 |
-| `domain_events` | Authoritative list of past-tense business events (e.g. `OrderPlaced`) | P4 |
-| `relationships` | Upstream and downstream context dependencies | P2 |
-| `services_in_context` | External services/APIs the context uses (e.g. boundary API, event stream). Contextual background only — not a table ownership list, not used for contract matching. | (background context) |
+| `business_capabilities` | List of capabilities, each with a `name` (2–4 words, verb-first) and `description` ("The ability to..."). Hints at derived fields (P3) and domain events (P4). | P3, P4 |
+| `relationships` | Upstream/downstream context dependencies — each entry has a `context` (connected context name) and `description` (why the connection exists) | P2 |
+| `services_in_context` | Applications making up this bounded context, each classified as `internal` (hidden) or `boundary_api` (public-facing). Contextual background only — not a table ownership list. | (background context) |
 
 **Table ownership:** Since `services_in_context` is not a table list, agents assume that all contracts pasted alongside a BCC belong to that BCC's context. When multiple BCCs are involved, agents match by name or ask the user.
 

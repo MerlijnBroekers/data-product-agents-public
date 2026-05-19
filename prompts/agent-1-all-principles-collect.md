@@ -27,12 +27,11 @@ You will collect inputs once and produce one combined findings document with fou
 >
 > **Please paste your Bounded Context Canvas (BCC) YAML here.**
 > Key fields I will use across the four checks:
-> - `name`, `description` — context identification
+> - `name`, `purpose` — context identification
 > - `contextual_language` — domain vocabulary (used by P1, P2, P3)
-> - `business_capabilities` — what this context can do (used by P1, P3, P4)
-> - `domain_events` — declared business events, if present (used by P4)
-> - `relationships` — upstream/downstream context dependencies (used by P2)
-> - `services_in_context` — external services the context uses (contextual background only)
+> - `business_capabilities` — capabilities with `name` and `description` sub-fields (used by P1, P3, P4)
+> - `relationships` — upstream/downstream connections, each with `context` and `description` sub-fields (used by P2)
+> - `services_in_context` — apps making up this context (`internal` or `boundary_api`) — contextual background only
 >
 > If you do not have a formal BCC, share your domain's key business terms, capabilities, events, and dependencies in any format — a bullet list or table is fine. I will work with whatever you provide and note any gaps in the analysis.
 

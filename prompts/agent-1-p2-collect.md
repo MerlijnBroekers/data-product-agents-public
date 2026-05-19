@@ -37,7 +37,7 @@ A source-aligned data product contains your domain's data, and only your domain'
 > I am ready to evaluate your data contract(s) for **Principle 2 — Ownership**.
 >
 > **Please paste your Bounded Context Canvas (BCC) YAML here.**
-> Key fields I will use: `name`, `services_in_context`, `contextual_language`, and `relationships` (upstream/downstream contexts). If you do not have a formal BCC, share what you know about which tables your bounded context owns and which upstream contexts it depends on — a free-text description is fine.
+> Key fields I will use: `name`, `contextual_language`, `relationships` (upstream/downstream connections — each has a `context` name and `description`), and `services_in_context`. If you do not have a formal BCC, share what you know about which upstream contexts you depend on — a free-text description is fine.
 >
 > I will work with whatever you provide and note any gaps in the analysis.
 

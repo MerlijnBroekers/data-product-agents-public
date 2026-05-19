@@ -33,12 +33,11 @@ You will collect inputs once and produce one combined findings document with fou
 >
 > **Please paste your Bounded Context Canvas (BCC) YAML here.**
 > Key fields I will use across the four checks:
-> - `name`, `description` — context identification
+> - `name`, `purpose` — context identification
 > - `contextual_language` — domain vocabulary (used by P1, P2, P3)
-> - `business_capabilities` — what this context can do (used by P1, P3, P4)
-> - `domain_events` — declared business events, if present (used by P4)
-> - `relationships` — upstream/downstream context dependencies (used by P2)
-> - `services_in_context` — external services the context uses (contextual background only)
+> - `business_capabilities` — capabilities with `name` and `description` sub-fields (used by P1, P3, P4)
+> - `relationships` — upstream/downstream connections, each with `context` and `description` sub-fields (used by P2)
+> - `services_in_context` — apps making up this context (`internal` or `boundary_api`) — contextual background only
 >
 > If you do not have a formal BCC, share your domain's key business terms, capabilities, events, and dependencies in any format — a bullet list or table is fine. I will work with whatever you provide and note any gaps in the analysis.
 
@@ -62,12 +61,12 @@ You will collect inputs once and produce one combined findings document with fou
 
 Extract and hold in memory from the BCC(s):
 - `name` — context name (if absent, use "Unnamed Context" and note the gap)
-- `description` — one-line summary (use empty string if absent)
+- `purpose` — one-line summary of what this context does and why it exists (use empty string if absent)
+- `opex` — the team responsible for owning this context (contextual background only)
 - `contextual_language` — list of `{term, definition}` pairs (if absent, note the gap; some checks will be limited)
-- `business_capabilities` — overview of what this context can do (note if absent)
-- `domain_events` — authoritative list of past-tense business events if present
-- `relationships` — upstream and downstream context dependencies (use to name likely owners in P2)
-- `services_in_context` — external services this context uses. Contextual background, **not** a table ownership list — do not use it to determine which contracts belong to this BCC
+- `business_capabilities` — list of capabilities, each with a `name` (2–4 words, starts with a verb) and `description` (starts with "The ability to..."). Note if absent.
+- `relationships` — list of upstream/downstream context dependencies, each with a `context` (connected context name) and `description` (why the connection exists). Use `context` names to identify likely owners in P2.
+- `services_in_context` — applications making up this bounded context, each classified as `internal` (hidden) or `boundary_api` (public-facing). Contextual background, **not** a table ownership list — do not use it to determine which contracts belong to this BCC.
 
 From each data contract, extract:
 - The table name
@@ -228,7 +227,7 @@ Entity state tells you that something changed. Domain events tell you what happe
 
 ### Building the events list
 
-Use `domain_events` as the authoritative source if present. If absent, derive a candidate list from `business_capabilities` entries that sound event-like — and note clearly in the output that this list is inferred, not declared. If neither field is present or yields candidates, note this and proceed — Check A can still run.
+Derive the events candidate list from `business_capabilities` — for each capability, read its `description` and look for business moments, outcomes, or state changes the domain cares about (e.g. "The ability to confirm when a customer places an order" hints at an `OrderPlaced` event). Note clearly in the output that this list is inferred from capabilities, not a declared event list. If `business_capabilities` is absent or yields no event-like candidates, note this and proceed — Check A can still run.
 
 ### Checks
 
@@ -238,7 +237,7 @@ Use `domain_events` as the authoritative source if present. If absent, derive a 
 
 The violation is not the presence of an entity state table — it is when only CRUD-style state exists and no domain events are present or planned for events the context explicitly identifies.
 
-**Check B — Domain events in the BCC vs events in the contracts (backlog notes).** For each domain event identified from the BCC (via `domain_events` or `business_capabilities`), check whether a corresponding table or field exists in the contracts. If no match exists, record it as a **backlog note** — not a finding. The principle allows teams to add domain events incrementally. Backlog notes do not count toward HIGH/MEDIUM/LOW totals.
+**Check B — Domain events in the BCC vs events in the contracts (backlog notes).** For each candidate domain event inferred from `business_capabilities`, check whether a corresponding table or field exists in the contracts. If no match exists, record it as a **backlog note** — not a finding. The principle allows teams to add domain events incrementally. Backlog notes do not count toward HIGH/MEDIUM/LOW totals.
 
 ### Severity guide (P4)
 

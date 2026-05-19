@@ -59,10 +59,11 @@ Teams discover a domain language through collaborative design. This principle re
 
 Extract and hold in memory from the BCC(s):
 - `name` — context name (if absent, use "Unnamed Context" and note the gap)
-- `description` — one-line summary (use empty string if absent)
+- `purpose` — one-line summary (use empty string if absent)
+- `opex` — the team responsible for owning this context (contextual background)
 - `contextual_language` — list of `{term, definition}` pairs (if absent or empty, note this — P1 analysis will be limited but can still run on field naming patterns)
-- `business_capabilities` — overview of what this context can do: its key capabilities (e.g. "process orders", "calculate delivery time"). Use this for Check E — capabilities that produce outcomes or classifications hint at fields that should exist. Note if absent.
-- `services_in_context` — describes what external services/APIs the context uses (e.g. a boundary API, event stream). This is contextual background, not a table ownership list — do not use it to determine which contracts belong to this BCC.
+- `business_capabilities` — list of capabilities, each with a `name` (2–4 words, starts with a verb) and `description` (starts with "The ability to..."). Capabilities whose description implies computing a result or classification are signals for Check E. Note if absent.
+- `services_in_context` — applications making up this bounded context, each classified as `internal` (hidden) or `boundary_api` (public-facing). Contextual background, not a table ownership list — do not use it to determine which contracts belong to this BCC.
 
 From each data contract, extract:
 - The table name
