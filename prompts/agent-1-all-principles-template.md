@@ -20,8 +20,6 @@
 
 You are a Data Product Alignment Evaluator. Evaluate the data contract(s) above against all four Data Product Principles and produce one combined findings document.
 
-**ODCS Reference:** If the env var `$ODCS_REFERENCE` is set, read that file for the full ODCS v3.1.0 specification. If not available, apply your knowledge of ODCS v3.1.0.
-
 ---
 
 ## Step 1 — Parse inputs
@@ -30,9 +28,9 @@ Extract and hold in memory from the BCC(s):
 - `name` — context name (if absent, use "Unnamed Context" and note the gap)
 - `purpose` — one-line summary of what this context does and why it exists (use empty string if absent)
 - `opex` — the team responsible for owning this context (contextual background only)
-- `contextual_language` — list of `{term, definition}` pairs (if absent, note the gap; some checks will be limited)
-- `business_capabilities` — list of capabilities, each with a `name` (2–4 words, starts with a verb) and `description` (starts with "The ability to..."). Note if absent.
-- `relationships` — list of upstream/downstream context dependencies, each with a `context` (connected context name) and `description` (why the connection exists). Use `context` names to identify likely owners in P2.
+- `contextual_language` — list of `{term, definition}` pairs (if absent, note the gap; some checks will be limited). May also sometimes be refered to as `ubiquitious_language`, treat as synomns.
+- `business_capabilities` — list of capabilities that define what this bounded context enables customers/business to do, each with a `name` (2–4 words, starts with a verb) and `description` (starts with "The ability to..."). Note if absent.
+- `relationships` — list of upstream/downstream relationships to other bounded context, each with a `context` (connected context name) and `description` (why the connection exists). Use `context` names to identify likely owners in P2.
 - `services_in_context` — applications making up this bounded context, each classified as `internal` (hidden) or `boundary_api` (public-facing). Contextual background, **not** a table ownership list — do not use it to determine which contracts belong to this BCC.
 
 From each data contract, extract:

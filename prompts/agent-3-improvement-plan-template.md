@@ -1,28 +1,26 @@
 > **HOW TO USE:** Fill in the three sections below, then paste this entire document into your LLM chat. The improvement plan will be built immediately.
 >
 > - **Section 1 (required):** Your annotated principle findings — the output from the Agent 1 template, after your team filled in the Team Review blocks.
-> - **Section 2 (required):** Your consumer analysis — the output from the Agent 2 template. Paste `none` if you have not run it.
+> - **Section 2 (required):** Your consumer analysis — the output from the Agent 2 template, after your team filled in the Team Review blocks on all suggestions and problems. Paste `none` if you have not run it.
 > - **Section 3 (optional):** Your original BCCs and contracts — only needed for ODCS data quality recommendations. Leave blank to skip.
 
 ---
 
 ## Section 1 — Annotated Principle Findings
 
-*Paste your findings here (Team Review blocks filled in). Remove this line.*
-
-*These are the outputs from whichever Agent 1 principle checks you ran, after your team filled in each Decision and Notes field. You can paste findings from one principle or all four — paste everything in one block.*
+*Paste your Agent 1 findings here (Team Review blocks filled in). Remove this line.*
 
 ---
 
 ## Section 2 — Consumer Analysis (Agent 2 output)
 
-*Paste the Agent 2 output here, or paste `none` if you have not run it. Remove this line.*
+*Paste the Agent 2 output here (Team Review blocks filled in), or paste `none` if you have not run it. Remove this line.*
 
 ---
 
 ## Section 3 — Original BCCs and Contracts (optional)
 
-*Paste your original BCCs and contracts here if you want ODCS-compatible data quality recommendations. Otherwise leave this section blank. Remove this line.*
+*Paste your original BCCs and contracts here if you want ODCS-compatible data quality recommendations. Otherwise leave blank. Remove this line.*
 
 ---
 
@@ -47,9 +45,9 @@ You work only from what the teams have decided. You do not re-evaluate principle
 
 ---
 
-## Step 1 — Parse the annotated findings
+## Step 1 — Parse the annotated principle findings (Agent 1)
 
-Work through each finding block. Each finding follows this structure:
+Work through each finding block in Section 1. Each finding follows this structure:
 
 ```
 ### [P1-001] `field_name` — table: `table_name`
@@ -62,52 +60,61 @@ Work through each finding block. Each finding follows this structure:
 - **Notes / Proposed Approach:** ...
 ```
 
-For each finding, extract: Finding ID, Principle (P1/P2/P3/P4), Severity, Table and field, Issue, Suggested Fix, Decision, Notes.
+For each finding, extract: Finding ID, Principle, Severity, Table, Field, Issue, Suggested Fix, Decision, Notes.
 
 **Routing rules:**
 - **Reject** → exclude entirely from all phases.
-- **Accept** → include in plan, using the agent's Suggested Fix. If team Notes refine the approach, use those notes.
-- **Propose Alternative** → include in plan, using the team's Notes / Proposed Approach (not the agent's Suggested Fix).
-- **Blank / unannotated** → treat as **Deferred**, assign to Phase 3 with a note that the team has not yet reviewed.
+- **Accept** → include in plan using the agent's Suggested Fix. If team Notes refine the approach, use those notes.
+- **Propose Alternative** → include in plan using the team's Notes / Proposed Approach (not the agent's Suggested Fix).
+- **Blank / unannotated** → treat as **Deferred**, assign to Phase 3.
 
-Also note all **P4 Backlog Notes** — list them in a dedicated backlog section for awareness.
+Also note all **P4 Backlog Notes** — list them in a dedicated backlog section.
 
 ---
 
-## Step 2 — Parse the consumer recommendations
+## Step 2 — Parse the consumer analysis (Agent 2)
 
-From the Agent 2 output (Section 2 above), extract:
-- The **consumer dependency map** — which tables and fields are consumed, by how many queries
-- All **suggested new fields** — target table, field name, computation, priority, evidence queries
-- The **high-dependency fields** — fields flagged as critical based on structural query patterns
-- The **unused contract surface** — fields no consumer query references
-- All **join key consistency issues** — mismatched join field names
+From Section 2, extract and route all items. Agent 2 items use these ID prefixes (all prefixed `CR-` to distinguish them from principle findings):
+- **CR-S** — Consumer Request: Suggested New Fields (additive)
+- **CR-C** — Consumer Request: Consumer-Aligned Product Candidates
+- **CR-P** — Consumer Request: Problems Identified (join key mismatches, grain risks, NULL sensitivity, type casting)
 
-If Agent 2 output was `none`, note this and flag that consumer risk classifications are estimates only.
+Also extract the **Detailed Field-Level Usage** table, including the dependency tier (T1/T2/T3) assigned to each field — this feeds the data quality recommendations in Step 5.
+
+**Routing rules for Agent 2 items:**
+
+| Item type | Accept | Reject | Propose Alternative | Blank |
+|---|---|---|---|---|
+| CR-S (new fields) | Phase 1 | Excluded | Phase 1 with team's approach | Phase 1 with note "not yet reviewed" |
+| CR-C (consumer-aligned products) | Phase 1 | Excluded | Phase 1 with team's approach | Phase 3 — needs producer decision |
+| CR-P join key | Phase 2 | Excluded | Phase 2 with team's approach | Phase 3 — needs producer decision |
+| CR-P grain risk | Phase 2 | Excluded | Phase 2 with team's approach | Phase 3 — needs producer decision |
+| CR-P NULL sensitivity | Quality recommendations | Excluded | Quality recs with team's approach | Include in quality recs with note "not yet reviewed" |
+| CR-P type casting | Phase 2 | Excluded | Phase 2 with team's approach | Phase 3 — needs producer decision |
+
+If Agent 2 output was `none`, note this throughout the plan and flag that consumer risk classifications are estimates only.
 
 ---
 
 ## Step 3 — Classify every change
 
-Build a unified list of all changes from accepted/alternative principle findings and consumer recommendations.
-
-For each change, classify:
+Build a unified list of all changes from Step 1 (accepted/alternative principle findings) and Step 2 (accepted/alternative consumer items).
 
 ### Risk classification
 
 **Safe (no consumer queries break):**
-- The change is purely additive (new field)
-- The change affects a field or table that zero consumer queries reference
+- Purely additive changes (new field, new quality rule)
+- Changes to fields or tables that zero consumer queries reference
 
 **Requires migration (consumer queries will break without transition):**
-- The change removes or renames a field that active queries depend on
+- Removes or renames a field that active queries depend on
 - Count the exact number of affected queries by index
 
 **Consumer-only (no principle dimension):**
-- Consumer-requested fields that do not address a principle violation — purely additive
+- Consumer-requested fields (S-xxx) and consumer-aligned products (C-xxx) — purely additive
 
 **Join key alignment (always requires migration):**
-Join key consistency issues from Agent 2. Determine which side uses the non-canonical name. If the canonical side is clear, assign to Phase 2. If unclear, assign to Phase 3 with an explicit product decision question.
+P-xxx join key issues from Agent 2. Determine which side uses the non-canonical name. If clear, assign to Phase 2. If unclear, assign to Phase 3 with an explicit product decision question.
 
 ### Conflict detection
 
@@ -127,26 +134,27 @@ Assign each change to exactly one phase:
 Safe changes with zero queries affected: fixes to unconsumed fields/tables, adding derived fields to tables with no consumers, removing or flagging CRUD audit tables no consumer references.
 
 ### Phase 1: Consumer Enhancements (additive, zero risk)
-New fields that consumers requested, purely additive. Deploy before Phase 2 — Phase 2 migrations may direct consumers to use these new fields as replacements.
+Accepted S-xxx fields, accepted C-xxx consumer-aligned products, and purely additive principle fixes. Deploy before Phase 2 — Phase 2 migrations may direct consumers to use these new fields as replacements.
 
-### Phase 2: Managed Migrations (principle fixes that touch consumed fields)
-Principle violations where the fix would break active consumer queries.
+### Phase 2: Managed Migrations (changes that touch consumed fields or fix structural problems)
+Principle violations where the fix would break active consumer queries, plus accepted CR-P problems (join key mismatches, grain risks, type casting issues).
 
 For each Phase 2 change, provide a concrete migration plan:
 ```
-Step 1: Add the canonical replacement (new field or join path)
-Step 2: Announce deprecation — document which field is being retired and the replacement
+Step 1: Add the canonical replacement (new field, corrected type, or pre-joined path)
+Step 2: Announce deprecation — document what is being retired and the replacement
 Step 3: Migration guidance — list every affected query by index and describe the required change
 Step 4: Deprecation window — suggest a timeline (e.g. 2 sprints / 30 days)
-Step 5: Remove the deprecated field
+Step 5: Remove the deprecated element
 ```
 
 ### Phase 3: Deferred / Needs Discussion
-- Changes the team has not annotated (blank Decision)
-- Changes where the team wrote "Defer" or where the right approach requires a product decision
-- Ambiguous P2 findings not yet confirmed — present both conditional plans:
+- Agent 1 findings with no Team Review annotation
+- Agent 2 CR-C, CR-P items with no Team Review annotation (producer decision required)
+- Changes where the team wrote "Defer"
+- Ambiguous P2 findings — present both conditional plans:
   - *If fetched foreign state:* removal plan with affected queries and deprecation path
-  - *If point-in-time snapshot:* rename plan that makes the captured nature explicit, with migration path
+  - *If point-in-time snapshot:* rename plan that makes the captured nature explicit
 
 For each Phase 3 item, state the open question clearly and suggest who should decide.
 
@@ -154,17 +162,19 @@ For each Phase 3 item, state the open question clearly and suggest who should de
 
 ## Step 5 — Build data quality recommendations
 
-Based on the high-dependency fields from Agent 2, produce ODCS-compatible data quality recommendations.
+Source for quality recommendations:
+- **Field tiers from Agent 2 Detailed Field-Level Usage:** T1 fields → Tier 1 recommendations, T2 → Tier 2, T3 → Tier 3
+- **Accepted CR-P NULL sensitivity items** → `quality` nullValues clauses
 
 ### Tiering by consumer impact
 
-**Tier 1 — Critical (field used by 10+ queries):** Strictest guarantees.
-**Tier 2 — Important (field used by 5–9 queries, or silently empties a query via WHERE/JOIN/NULLIF):** Note the inferred basis when applying this upgrade.
-**Tier 3 — Recommended (field used by 2–4 queries, degraded results only):** Baseline guarantees.
+**Tier 1 — Critical (T1 fields):** Strictest guarantees. These fields are load-bearing for KPIs or silently empty queries if unreliable.
+**Tier 2 — Important (T2 fields):** Fields that materially degrade results.
+**Tier 3 — Recommended (T3 fields):** Baseline guarantees.
 
 ### ODCS-compatible format
 
-For **data quality guarantees** — use the `quality` block on the relevant property:
+For **data quality guarantees** — use the `quality` block:
 
 ```yaml
 properties:
@@ -173,7 +183,6 @@ properties:
       - metric: nullValues
         mustBeLessThan: 0.1
         unit: percent
-        description: "Non-null rate above 99.9%"
         dimension: completeness
       - metric: invalidValues
         arguments:
@@ -182,20 +191,20 @@ properties:
         dimension: validity
 ```
 
-For **SLA properties** — use the `slaProperties` block:
+For **SLA properties** (freshness, frequency) — use the `slaProperties` block:
 
 ```yaml
 slaProperties:
   - property: latency
     value: 24
-    unit: d
-    element: [object.property]
+    unit: h
+    element: [table_name.field_name]
     driver: operational
-    description: "Data lag should not exceed 24 hours"
+    description: "N consumer queries require data no older than 24 hours"
   - property: frequency
     value: 1
     unit: d
-    element: [object.property]
+    element: [table_name.field_name]
 ```
 
 Note whether each recommendation is **measurable now** or **measurable after Phase X**. Do not recommend quality rules on fields that do not yet exist.
@@ -211,8 +220,8 @@ Note whether each recommendation is **measurable now** or **measurable after Pha
 ```markdown
 # Data Contract Improvement Plan
 
-> Generated from: annotated principle findings + consumer recommendations
-> Principles evaluated: [list which principles findings were provided for]
+> Generated from: annotated principle findings + consumer analysis
+> Principles evaluated: [list which principles were provided]
 > Consumer queries: N  |  Data contracts: M
 
 ---
@@ -224,31 +233,31 @@ Note whether each recommendation is **measurable now** or **measurable after Pha
 - Phase 1 (consumer enhancements): Y changes — additive, zero risk
 - Phase 2 (managed migrations): Z changes — requires deprecation path
 - Phase 3 (deferred): W changes — needs team decision
-- Rejected by team: R findings — excluded from plan
+- Rejected by team: R items — excluded from plan
 
 ---
 
 ## Consumer Impact Matrix
 
-| # | Context | Change | Source | Principle | Queries Affected | Queries Benefiting | Risk | Phase |
-|---|---|---|---|---|---|---|---|---|
-| 1 | Orders | Add `delivery_days` to orders | Consumer | — | 0 | Query 2, 5, 9 | Safe | 1 |
-| 2 | Orders | Remove `shipping_country` from orders | Alignment P2-003 | P2 | Query 1, 3, 7 | 0 | Migration | 2 |
+| # | Change | Source | Queries Affected | Queries Benefiting | Risk | Phase |
+|---|---|---|---|---|---|---|
+| 1 | Add `delivery_days` to orders | CR-S001 | 0 | Query 2, 5, 9 | Safe | 1 |
+| 2 | Remove `shipping_country` from orders | P2-003 | Query 1, 3, 7 | 0 | Migration | 2 |
+| 3 | Align join key: orders.cust_id → customer_id | CR-P001 | Query 1, 4 | Query 1, 4 | Migration | 2 |
 
 ---
 
 ## [Context Name] Context
 
-> **Services in scope:** [comma-separated list]
 > **Changes in this context:** [X total — P0: a, P1: b, P2: c, P3: d]
 
 ### Phase 0: Quick Wins
 
 #### [change title]
-**Source:** Alignment finding [finding ID] — Principle [N]
+**Source:** Principle finding [ID] — Principle [N]
 **Table:** [table_name]
 **Change:** [description]
-**Team Approach:** [Accept (agent fix) or Propose Alternative (team's approach)]
+**Team Approach:** [Accept (agent fix) / Propose Alternative (team's approach)]
 **Affected queries:** None
 **Action:** [specific DDL or contract edit]
 
@@ -257,10 +266,10 @@ Note whether each recommendation is **measurable now** or **measurable after Pha
 ### Phase 1: Consumer Enhancements
 
 #### [change title]
-**Source:** Consumer recommendation — [priority]
+**Source:** [CR-S001 / CR-C001] — [priority]
 **Table:** [table_name]
-**Change:** Add field `[field_name]` ([data type])
-**Computation:** [how to derive from existing fields]
+**Change:** [Add field `field_name` (type) / Create consumer-aligned product for join chain]
+**Computation / Approach:** [exact derivation or product description]
 **Benefiting queries:** [count] ([Query 1, Query 4, ...])
 **Action:** [specific DDL or contract edit]
 
@@ -269,40 +278,39 @@ Note whether each recommendation is **measurable now** or **measurable after Pha
 ### Phase 2: Managed Migrations
 
 #### [change title]
-**Source:** Alignment finding [finding ID] — Principle [N]
+**Source:** [Principle finding ID / P-001]
 **Table:** [table_name]
-**Violation:** [description of the principle violation]
-**Team Approach:** [Accept (agent fix) or Propose Alternative (team's approach)]
-**Consumer conflict:** [N] queries currently depend on this field
-**Affected queries:** Query 1, Query 3, Query 7
+**Issue:** [principle violation description OR problem description]
+**Team Approach:** [Accept / Propose Alternative]
+**Consumer conflict:** [N] queries currently depend on this
 
 **Migration plan:**
 1. **Add replacement:** [describe the canonical alternative]
-2. **Announce deprecation:** Document that `[old_field]` will be removed and point consumers to the replacement.
+2. **Announce deprecation:** Document that `[old_element]` will be retired and point consumers to the replacement.
 3. **Migration guidance per query:** [for each affected query by index, describe the required SQL change]
 4. **Deprecation window:** Suggested [N days/sprints] before removal.
-5. **Remove:** Drop `[old_field]` from the contract and schema.
+5. **Remove:** Drop `[old_element]` from the contract and schema.
 
 ---
 
 ### Phase 3: Deferred / Needs Discussion
 
 #### [change title]
-**Source:** [Alignment finding ID] / [unannotated]
-**Reason deferred:** [team did not annotate / open question needs product decision]
+**Source:** [Principle finding ID / Agent 2 item ID] / [unannotated]
+**Reason deferred:** [team did not annotate / open question / producer decision required]
 **Open question:** [what needs to be decided]
-**Trade-off:** [pros and cons of each option]
+**Trade-off:** [pros and cons]
 **Suggested decision-maker:** [data producer / consumer team / architecture review]
 
 ---
 
 ### Data Quality Recommendations
 
-#### Tier 1 — Critical (10+ query dependencies)
+#### Tier 1 — Critical (T1 fields)
 
-##### [table_name].[field_name]: [guarantee type]
-**Consumer demand:** [usage pattern and query count]
-**Query count:** [N] queries depend on this field
+##### [table_name].[field_name]
+**Dependency tier:** T1 — [N] queries, usage: [filter/join/denominator/trend]
+**Source:** [Field-level usage from Agent 2 / Accepted P-xxx NULL sensitivity / Accepted F-xxx freshness]
 **Measurable:** Now / After Phase [X]
 
 **Suggested ODCS clause:**
@@ -310,25 +318,27 @@ Note whether each recommendation is **measurable now** or **measurable after Pha
 [yaml block]
 ```
 
-#### Tier 2 — Important (5–9 queries, or causes empty/zero results)
+#### Tier 2 — Important (T2 fields)
 [same format]
 
-#### Tier 3 — Recommended (2–4 queries, degraded results only)
+#### Tier 3 — Recommended (T3 fields)
 [same format]
 
 ---
 
-## Findings excluded (team rejected)
+## Excluded items (team rejected)
 
-| Finding ID | Table | Field | Reason |
-|---|---|---|---|
-| P1-002 | orders | reservation | Team notes: field name is legacy, consumers depend on it — no change |
+| ID | Type | Table | Item | Reason |
+|---|---|---|---|---|
+| P1-002 | Principle finding | orders | Rename `reservation` → `booking` | Team notes: legacy name, consumers depend on it |
+| CR-S003 | Consumer suggestion | orders | Add `total_line_value` | Team notes: consumers should compute this themselves |
+| CR-P002 | Consumer problem | shipments | Grain mismatch in Query 7 | Team notes: query is intentionally fan-out |
 
 ---
 
 ## P4 Backlog (domain events not yet implemented)
 
-> These domain events were inferred from business capabilities but have no corresponding table or field. No action required now — add them to your backlog when implemented.
+> These domain events were inferred from business capabilities but have no corresponding table or field. No action required now — add to your backlog when implemented.
 
 - [Context Name] — `EventName`: [brief description]
 ```
@@ -337,10 +347,10 @@ Note whether each recommendation is **measurable now** or **measurable after Pha
 
 ## Rules
 
-- Every accepted change must cite its finding ID and source (alignment or consumer).
+- Every accepted change must cite its source ID (principle finding ID or Agent 2 item ID).
 - Every change that affects consumed fields must list the affected queries by index.
 - Do not propose "just remove it" for any field that active queries depend on. Always provide a migration path.
-- The team's **Proposed Approach** takes precedence over the agent's Suggested Fix for "Propose Alternative" findings.
-- Data quality recommendation YAML must be ODCS-compatible and insertable directly into contract files.
-- Do not re-evaluate findings. Take them as given — your job is to sequence and reconcile.
+- The team's **Proposed Approach** takes precedence over the agent's suggestion for "Propose Alternative" items.
+- Data quality YAML must be ODCS-compatible and insertable directly into contract files.
+- Do not re-evaluate findings or suggestions. Take them as given — your job is to sequence and reconcile.
 - Keep the tone actionable and concrete — this is a plan the data producer will execute.
