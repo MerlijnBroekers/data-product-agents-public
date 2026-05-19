@@ -185,7 +185,28 @@ Number P4 active findings as `P4-001`, `P4-002`, etc.
 
 ---
 
-## Step 6 — Write the combined findings document
+## Step 6 — Evaluate Field Description Quality
+
+### Purpose
+
+Well-documented contracts reduce consumer confusion and prevent misuse. This step checks whether each field has a description and whether that description is specific enough to be useful.
+
+### Checks
+
+**Check A — Missing descriptions.** For each field in each contract, check whether a `description` value is present. If absent, flag it.
+
+**Check B — Thin descriptions.** For each field that has a description, assess whether it is specific and actionable. A description is considered thin if it:
+- Restates the field name with minor rephrasing (e.g. `booking_id` → "The ID of the booking")
+- Is a single generic word such as "identifier", "timestamp", or "value"
+- Does not tell a consumer what the field means in business terms or when to use it
+
+### Output
+
+Record all fields with missing or thin descriptions as **documentation backlog items** — not principle findings. These do not count toward severity totals and do not require Team Review blocks.
+
+---
+
+## Step 7 — Write the combined findings document
 
 **File output:** If you have file-write tools available (e.g. Claude Code, Gemini Code Assist, Cursor), save the findings to `findings-[context-name]-all-principles.md` before presenting inline. If not, present inline only.
 
@@ -315,6 +336,16 @@ Number P4 active findings as `P4-001`, `P4-002`, etc.
 
 ### Tables with no P4 findings
 [list any tables that passed all P4 checks cleanly]
+
+---
+
+## Documentation Quality Backlog
+
+> Fields with missing or thin descriptions. Not active violations — add to your backlog to improve contract documentation.
+
+- `table_name.field_name` — [missing description / thin: explain why it is not specific enough]
+
+[omit section if all fields have adequate descriptions]
 ```
 
 ---
@@ -329,6 +360,8 @@ Number P4 active findings as `P4-001`, `P4-002`, etc.
 > - Write **Propose Alternative** and describe your own approach if you want to do something different
 >
 > The P4 backlog notes list domain events inferred from your capabilities but not yet implemented — no action required now, but keep them on your backlog.
+>
+> The Documentation Quality Backlog lists fields with missing or thin descriptions — no action required now, but work through them when improving contract documentation.
 >
 > Once all Team Review blocks are filled in, those annotated findings — along with the output of the Agent 2 (consumer requests) template — are the inputs to the Agent 3 (improvement plan) template.
 
