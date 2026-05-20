@@ -1,3 +1,22 @@
+# Align — Data Product Prompt Templates
+
+Three prompt templates that help facilitators prepare for Data Product workshops and help teams improve their data contracts.
+
+---
+
+**Agent 1 — Principle Analysis** (`prompts/agent-1-all-principles-template.md`)
+Evaluates a team's data contract against the four Data Product Principles. Input: a Bounded Context Canvas and one or more data contracts. Output: a structured findings document with a Team Review block on each finding.
+
+**Agent 2 — Consumer Analysis** (`prompts/agent-2-consumer-requests-template.md`)
+Analyses how consumers use the data based on their SQL query patterns. Input: a JSON array of SQL queries and the data contracts. Output: a dependency map, suggested new fields, and flagged risks — each with a Team Review block.
+
+**Agent 3 — Improvement Plan** (`prompts/agent-3-improvement-plan-template.md`)
+Turns the team's annotated findings into a phased improvement plan. Input: completed Agent 1 and Agent 2 outputs with Team Review blocks filled in. Output: a sequenced plan across four phases (quick wins → consumer enhancements → managed migrations → deferred).
+
+See `FACILITATOR-GUIDE.md` for instructions on how and when to run each prompt.
+
+---
+
 # Data Product Agents
 
 AI agents that evaluate data contracts against DDD-based Data Product Principles and produce an actionable, phased improvement plan.
