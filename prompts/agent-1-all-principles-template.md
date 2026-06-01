@@ -80,45 +80,61 @@ Number P1 findings as `P1-001`, `P1-002`, etc.
 
 ---
 
-## Step 3 — Evaluate Principle 2 (Ownership)
+## Step 3 — Evaluate Principle 2 (Be Explicit About What You Own)
 
 ### Definition
 
-A source-aligned data product contains your domain's data, and only your domain's data. When teams republish data from other bounded contexts, they create duplicate sources of truth, stale snapshots, and ambiguous ownership.
+A governed data product must clearly communicate what business statements it is accountable for, which data it owns, and which data originates elsewhere. Every field carries an implicit claim: that your team understands it, stands behind it, and is accountable for it.
 
-**What this means in practice:**
-- Only expose data your bounded context creates or captures as part of its own business processes.
-- Reference foreign entities by ID only.
-- **Captured snapshots are yours.** If your bounded context stores a snapshot of foreign data as part of its own process (e.g. the price at the moment of ordering), that snapshot is owned by your context.
-- **Fetched state is not yours.** If you would need to query another system to populate a field, it does not belong here.
+**What you own:**
+- **Data your context creates.** If your domain generates this data as part of its own business processes, you own it.
+- **Snapshots you capture as part of your process.** If your context stores a snapshot of foreign data as part of a business action (e.g. the price at the moment of ordering, the address used for shipping), that snapshot is owned by your domain.
+- **Data you transform.** If you apply logic, combine fields, or reshape a value, the result belongs to you. You are accountable for what it means — be explicit.
 
-**The two-question test** for any field that is not a clearly local concept:
-1. Does your system create this data? → yours, share it
-2. Does your system capture this data as part of its own process? → yours, share it (but name it as a snapshot)
-3. Would you need to query or pull from another system to get it? → not yours, reference by ID only
+**What requires justification and transparency:**
+- **Data from another source** may sometimes be included when consumers genuinely need it and cannot reasonably be expected to fetch it themselves. When you do this, document where the field comes from and why it is included. Never let a consumer mistake a republished field for one your domain owns.
+
+**What does not belong:**
+- **Data that is unused or easily joined downstream.** If a field adds no value that consumers could not get themselves by joining on a foreign ID you already expose, remove it.
+
+**The five-question test** for every field:
+1. Does a business action in our bounded context cause this record or value to exist? → own it, share it.
+2. Did we capture this value as a snapshot during our own business process? → own that snapshot.
+3. Is this data the result of a transformation in our domain? → own it; document what the transformation means.
+4. Does this come from another source, and do consumers genuinely need it delivered here? → may include it; document where it comes from and why.
+5. Is this field unused, or could a consumer easily derive it by joining on a foreign ID already exposed? → remove it; it does not belong.
+
+**ID field descriptions** — for any identifier field, the description must make ownership explicit:
+- ID produced *inside* this bounded context: state that it is produced inside the bounded context. If the local name is not domain-agnostic, name the domain-agnostic equivalent.
+- ID produced *outside* this bounded context: state that it references an entity produced outside this bounded context.
 
 ### Checks
 
-**Check A — Fields that are attributes of another bounded context.** Apply the two-question test to each field that is not a clearly local concept. For any field that appears to be an attribute of a foreign bounded context, flag it using this format:
+**Check A — Foreign state without justification.** For any field that appears to carry live foreign state with no documented justification, flag it:
 
 ```
-[HIGH] [FIELD: field_name] This field appears to be an attribute of another bounded context. Clarify intent before acting:
-- If this is foreign state fetched from another context — it does not belong here.
-- If this is a point-in-time snapshot captured during a local business action — it is owned by this context and correct to share, but the field name should reflect that clearly (e.g. `price_at_order`, `address_at_shipment`).
+[HIGH] [FIELD: field_name] This field appears to carry foreign state from another bounded context with no documented justification. Clarify intent before acting:
+- If this is foreign state that could be fetched via the owning context's data product — remove it; expose the reference ID and let consumers join.
+- If this is a point-in-time snapshot captured during a local business action — rename it to reflect the captured nature (e.g. `price_at_order`, `address_at_shipment`) and document this clearly.
+- If consumers genuinely cannot be expected to fetch this themselves — it may be included, but the description must document the source and the justification.
 The team must confirm which case applies.
 ```
 
-Severity is HIGH in both cases. Where the BCC `relationships` list includes an entry whose `context` matches the likely owner, reference that context name when flagging.
+Where the BCC `relationships` list includes an entry whose `context` matches the likely owner, reference that context name when flagging.
 
-**Check B — Reference field naming.** For every confirmed foreign key field, check whether the field name matches the term used by the owning context's contextual language.
+**Check B — Undocumented transformations.** For any field that appears to be a derived, calculated, or combined value, check whether the description explains what the transformation means in business terms. If absent or purely technical, flag as [MEDIUM].
 
-**Check C — Reference field descriptions.** For every confirmed foreign key field, check whether the field has a description that identifies the owning bounded context. If absent, flag as [MEDIUM].
+**Check C — Unused or easily derivable fields.** For any field a consumer could obtain by joining on a foreign ID already exposed in the same contract, flag as [MEDIUM]: it adds noise without adding ownership value.
 
-**Check D — Fields not flagged.** Do not flag confirmed foreign key fields with correct naming and descriptions, or fields that clearly belong to this context.
+**Check D — Reference field naming.** For every confirmed foreign key field, check whether the field name matches the term used by the owning context's contextual language. A mismatch is a P2 finding.
+
+**Check E — ID field descriptions.** For every identifier field (`_id`, `_key`, `_ref`, or described as a primary/foreign key): flag as [MEDIUM] if the description does not state whether the ID is produced inside or outside this bounded context, or if the local name is not domain-agnostic and no domain-agnostic equivalent is named.
+
+**Check F — Fields not flagged.** Do not flag: confirmed foreign key fields with correct naming and a description stating their origin; captured snapshot fields named to reflect that nature and documented accordingly; fields that clearly belong to this context (created, captured, or transformed) and are described clearly.
 
 ### Severity (P2)
-- **HIGH** — a field carries foreign state that does not belong here, or its ownership is ambiguous.
-- **MEDIUM** — a reference field's description does not identify the owning context; minor naming mismatch on a foreign key.
+- **HIGH** — a field carries foreign state with no documented justification, or its ownership category is genuinely ambiguous and cannot be resolved without team input.
+- **MEDIUM** — a transformed field lacks a business-meaning description; a reference field description is absent or does not identify the owning context; an ID field description does not state inside/outside origin; a field is unused or easily derivable downstream.
 - **LOW** — possible ownership concern but genuine uncertainty.
 
 Number P2 findings as `P2-001`, `P2-002`, etc.
@@ -226,7 +242,7 @@ Record all fields with missing or thin descriptions as **documentation backlog i
 | Principle | HIGH | MEDIUM | LOW | Total |
 |---|---|---|---|---|
 | P1 — Domain Language | N | N | N | N |
-| P2 — Ownership | N | N | N | N |
+| P2 — Be Explicit About What You Own | N | N | N | N |
 | P3 — Knowledge vs Data | N | N | N | N |
 | P4 — Business Events | N | N | N | N |
 | **Total** | **N** | **N** | **N** | **N** |
@@ -259,20 +275,20 @@ Record all fields with missing or thin descriptions as **documentation backlog i
 
 ---
 
-## Principle 2 — Ownership
+## Principle 2 — Be Explicit About What You Own
 
 ### Findings
 
 #### [P2-001] `field_name` — table: `table_name`
 
 **Severity:** HIGH / MEDIUM / LOW
-**Check:** A / B / C / D
+**Check:** A / B / C / D / E / F
 **Issue:** [clear description — name the bounded context that is likely the owner where known]
 **Suggested Fix:** [concrete recommendation]
 
 **Team Review** — fill in before running the Agent 3 improvement-plan prompt:
 - **Decision:** [ ] Accept suggested fix   [ ] Reject — no change needed   [ ] Propose Alternative
-- **Notes / Proposed Approach:** _(for ambiguous P2 fields, confirm whether this is fetched foreign state or a captured snapshot, and describe what you will do)_
+- **Notes / Proposed Approach:** _(For Check A: confirm whether this is fetched foreign state, a captured snapshot, a justified inclusion for consumers, or something else — and describe what you will do. For Check B: explain the transformation in business terms. For Check E: confirm whether the ID is produced inside or outside this bounded context and name the domain-agnostic equivalent if applicable.)_
 
 ---
 

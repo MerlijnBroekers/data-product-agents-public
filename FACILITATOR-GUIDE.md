@@ -127,7 +127,7 @@ Use these templates to communicate with teams at each handoff point. Adapt names
 >
 > If you haven't generated your data contract yet, please do so using the BOLD CLI and export it as a YAML file.
 >
-> Please send both files to [facilitator email] by **[date — suggested: 3 working days before Workshop 1]**.
+> **Please send both files as a reply to the Workshop 1 meeting invite by [date — suggested: 3 working days before Workshop 1].** This ensures the facilitator running Workshop 1 receives your inputs directly — note that this may be a different person than today's facilitator.
 >
 > If you run into any issues generating the contract, reply to this email and we'll help you.
 >
@@ -162,7 +162,7 @@ Use these templates to communicate with teams at each handoff point. Adapt names
 > - Copy them directly from your query tool or BI layer if possible
 > - There is no minimum or maximum — include what you have
 >
-> Please send the JSON file or paste it in a reply to [facilitator email] by **[date — suggested: 3 working days before Workshop 2]**.
+> **Please send the JSON as a reply to the Workshop 2 meeting invite by [date — suggested: 3 working days before Workshop 2].** This ensures the facilitator running Workshop 2 receives your input directly — note that this may be a different person than today's facilitator.
 >
 > See you at Workshop 2 on [date].
 >

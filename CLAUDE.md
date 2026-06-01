@@ -60,7 +60,7 @@ Each skill is entirely defined in its `SKILL.md` file — there is no separate r
 ### The 4 Data Product Principles
 
 1. **Use your domain language, consistently** — field/table names must match the BCC's `contextual_language`; same concept always uses the same name
-2. **Do not share what you do not own** — only expose data the bounded context creates or captures; reference foreign entities by ID only
+2. **Be explicit about what you own** — every field must be classifiable as created, captured, transformed, or justified-foreign; undocumented foreign state and unused/derivable fields do not belong
 3. **Share knowledge, not data** — expose derived facts from `business_capabilities`; don't leave consumers to reconstruct logic
 4. **Capture business meaning, not just state changes** — model domain events from `business_capabilities`; avoid generic CRUD logs
 
